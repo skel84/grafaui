@@ -1,0 +1,73 @@
+name: macOS
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: macos-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_BUILD_JOBS: 2
+  RUST_BACKTRACE: 1
+
+jobs:
+  build:
+    name: Build and test (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: Intel x86_64
+            runner: macos-15-intel
+            target: x86_64-apple-darwin
+          - arch: Apple Silicon arm64
+            runner: macos-15
+            target: aarch64-apple-darwin
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+          targets: ${{ matrix.target }}
+      - name: Verify Xcode and Metal tools
+        run: |
+          xcodebuild -version
+          xcrun --sdk macosx --find metal
+          xcrun --sdk macosx --find metallib
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: macos-${{ matrix.target }}
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Verify dashboard snapshots
+        run: python3 scripts/fetch-fixtures.py --check
+      - name: Clippy
+        run: cargo clippy --workspace --release --locked --target "${{ matrix.target }}"
+      - name: Tests
+        run: cargo test --workspace --release --locked --target "${{ matrix.target }}"
+      - name: Build
+        run: cargo build --release --locked --target "${{ matrix.target }}"
+      - name: Package binary and dashboards
+        run: python3 scripts/package-macos.py "${{ matrix.target }}"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: grafaui-${{ matrix.target }}
+          path: |
+            dist/grafaui-${{ matrix.target }}.tar.gz
+            dist/grafaui-${{ matrix.target }}.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 14

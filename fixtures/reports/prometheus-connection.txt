@@ -1,0 +1,120 @@
+Prometheus connection verification — 2026-10-02
+
+Implemented
+-----------
+The CLI accepts --prometheus-url URL and --scrape-interval SECONDS. Fake mode
+remains the default without a URL, and can be requested explicitly with --fake.
+The flags --fake and --prometheus-url are mutually exclusive.
+
+Networking lives in grafaui-prometheus, separate from the model and renderer.
+The crate uses reqwest for HTTP and promql-parser 0.11.0 for duration parsing and
+validation of variable-query vector selectors. Prometheus remains the authority
+for expression syntax, including newer or experimental functions.
+
+Instant, range and both-mode targets retain refId, expr, legendFormat, datasource,
+format, interval, intervalFactor and legacy step. Hidden targets are skipped.
+Panel maxDataPoints, interval, timeFrom and timeShift control request resolution
+and evaluation windows. Range endpoints are aligned to their step.
+
+Vector, matrix and scalar responses preserve labels, refIds and millisecond
+timestamps. Samples are aligned onto a shared axis; absent/non-finite values stay
+missing. Requested range grids retain steps absent from every returned series.
+Legends substitute {{label}} templates, with metric labels as the default name.
+Charts split gaps and use actual timestamps for irregular samples. All-missing
+sum reductions remain missing. Successful empty queries show No data.
+
+Variables resolve in dashboard order, including dependent label_values queries.
+Supported query forms: label_values(selector, label), label_values(label),
+label_names(), metrics(regex), query_result(PromQL). Regex filtering, alphabetical
+and numeric sorting, saved multi selections and All expansion are supported.
+$name, ${name}, [[name]], regex/raw/csv/pipe formatting and scoped values are
+interpolated with PromQL string/regex escaping. Macros include $__interval,
+$__interval_ms, $__rate_interval, $__rate_interval_ms, $__range, $__range_s,
+$__range_ms, $__from and $__to. The scrape interval defaults to 15 seconds;
+set it to the endpoint's actual interval, or use a target's minimum step.
+
+Background workers resolve variables and fetch panels independently. At most
+four HTTP requests run concurrently across refresh revisions. Loading states
+preserve previously usable data; failures show readable errors and clear the
+failed frame. Dropping/replacing a run cancels queued work. Revision checks
+prevent old results from updating a newer range or selection. In-flight blocking
+HTTP calls can finish until their timeout (20 seconds); they are discarded after
+cancellation. Warnings/infos from Prometheus appear on the affected panel.
+Refresh, time-range changes and variable selection changes trigger new requests.
+Real failures never substitute fake data.
+
+Live and native verification
+----------------------------
+Discovered using ~/code/home-ops/kubeconfig:
+  namespace: observability
+  service: kube-prometheus-stack-prometheus
+  service port: 9090
+  local port: 19090 (bound to 127.0.0.1)
+
+No cluster resources were changed. Node-exporter targets reported a 30-second
+scrape interval. The production client checked the existing node-exporter-full
+dashboard for a 24-hour range with that interval: 124 panels, 109 with finite
+data, 15 empty, zero request errors. See prometheus-live-queries.txt. Empty panels
+reflect absent metrics/label matches, including the fixture's root-filesystem
+selector; some returned samples are NaN (for example zero-swap utilization).
+
+In a native macOS window, verified the node-exporter dashboard's live gauges,
+stacked CPU/memory charts and network data. Changed the range from 24 hours to
+one hour, observed loading while the UI remained interactive, and selected a
+different nodename using the dropdown's Down/Enter keys. Its dependent instance
+and panel values updated. Actual missing periods remained chart gaps.
+Screenshot: prometheus-node-exporter-live.png.
+
+A separate native check showed a live scalar count, an invalid PromQL request
+with its refId/HTTP/Prometheus error, and an absent metric displaying No data.
+Screenshot: prometheus-request-states.png. The explicit --fake kitchen-sink
+dashboard was also checked in a native window.
+
+Validation
+----------
+cargo test --workspace --release: 113 passed (95 baseline + 18 new tests).
+cargo build --release: passed.
+cargo fmt --all -- --check: passed.
+cargo clippy --workspace --release --all-targets --no-deps: passed, with the
+existing fake-data type-complexity warning. The dependency block 0.1.6 retains
+its existing future-compatibility warning.
+
+Limitations
+-----------
+One endpoint is used for all Prometheus datasource names/UIDs. Authentication,
+multiple endpoints, mixed/non-Prometheus sources, Grafana server expressions,
+native histogram samples, string query results and exemplars are unsupported.
+Exemplars are reported as warnings; unsupported requests and result types return
+visible errors. Classic histogram bucket metrics still use the existing renderer.
+
+Only relative dashboard ranges ending at now are supported. Absolute and rounded
+dashboard ranges fail clearly at startup. Live repeated panels are shown once
+with a compatibility note; their layout is not regenerated from live variables.
+Variable controls select one value or All; saved multiple selections are retained
+but there is no new multi-selection editor. Variable display text/value aliases
+are shown by their actual value. Variables refresh on each query cycle and must
+be declared in dependency order. Unsupported variable query forms, types,
+formatters, sort modes and duration/macros return errors. Range table targets
+currently reduce each series to one row and report this as a warning. Heatmap
+bucket edges retain their existing whole-second resolution. Refresh is manual;
+the dashboard's automatic refresh schedule is not implemented. Logs and further
+visualization features remain out of scope.
+
+Reproduce
+---------
+In one terminal, restart the testing port-forward:
+  kubectl --kubeconfig ~/code/home-ops/kubeconfig -n observability port-forward --address 127.0.0.1 svc/kube-prometheus-stack-prometheus 19090:9090
+
+In another terminal:
+  cd ~/code/grafaui
+  ./target/release/grafaui --fixture node-exporter --prometheus-url http://127.0.0.1:19090 --scrape-interval 30
+
+To run the same request/conversion check without a window:
+  cargo run -p grafaui-prometheus --release --example check -- http://127.0.0.1:19090 fixtures/node-exporter-full.json now-24h 30
+
+For fake mode:
+  ./target/release/grafaui --fixture node-exporter --fake
+
+The verification port-forward and application processes started for this task
+were stopped after testing. Existing repository work was preserved. No commit
+was created.

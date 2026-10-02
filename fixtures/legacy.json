@@ -1,0 +1,71 @@
+{
+  "title": "Legacy rows (schema 14)",
+  "tags": ["legacy"],
+  "schemaVersion": 14,
+  "time": { "from": "now-24h", "to": "now" },
+  "templating": { "list": [ { "name": "host", "type": "query", "current": { "text": "web-01", "value": "web-01" } } ] },
+  "rows": [
+    {
+      "title": "Overview",
+      "height": "180px",
+      "showTitle": true,
+      "panels": [
+        {
+          "id": 1, "type": "singlestat", "title": "Load ($host)", "span": 3,
+          "format": "short", "valueName": "current", "decimals": 2,
+          "colorValue": true, "thresholds": "2,4", "colors": ["#299c46", "rgba(237, 129, 40, 0.89)", "#d44a3a"],
+          "sparkline": { "show": true },
+          "targets": [ { "refId": "A", "expr": "node_load1{instance=~\"$host.*\"}" } ]
+        },
+        {
+          "id": 2, "type": "singlestat", "title": "Disk used", "span": 3,
+          "format": "percent", "valueName": "current",
+          "thresholds": "70,90", "colors": ["#299c46", "rgba(237, 129, 40, 0.89)", "#d44a3a"],
+          "gauge": { "show": true, "minValue": 0, "maxValue": 100 },
+          "targets": [ { "refId": "A", "expr": "disk_used_percent" } ]
+        },
+        {
+          "id": 3, "type": "singlestat", "title": "Requests today", "span": 3,
+          "format": "short", "valueName": "total", "colorBackground": true,
+          "thresholds": "100000,500000", "colors": ["#3274D9", "#56A64B", "#E02F44"],
+          "targets": [ { "refId": "A", "expr": "sum(increase(http_requests_total[1d]))" } ]
+        },
+        {
+          "id": 4, "type": "text", "title": "Notes", "span": 3, "mode": "html",
+          "content": "<h3>Legacy text panel</h3><p>Old dashboards kept panels in <b>rows</b> sized by <code>span</code>.</p>"
+        }
+      ]
+    },
+    {
+      "title": "Graphs",
+      "height": 300,
+      "panels": [
+        {
+          "id": 5, "type": "graph", "title": "Network traffic on $host", "span": 8,
+          "lines": true, "fill": 2, "linewidth": 1, "stack": false,
+          "yaxes": [ { "format": "bps", "show": true }, { "format": "short", "show": false } ],
+          "legend": { "show": true, "values": false },
+          "seriesOverrides": [ { "alias": "/out/", "transform": "negative-Y" } ],
+          "targets": [
+            { "refId": "A", "expr": "rate(node_network_receive_bytes_total[5m]) * 8", "legendFormat": "in {{device}}" },
+            { "refId": "B", "expr": "rate(node_network_transmit_bytes_total[5m]) * 8", "legendFormat": "out" }
+          ]
+        },
+        {
+          "id": 6, "type": "table-old", "title": "Top processes", "span": 4,
+          "targets": [ { "refId": "A", "expr": "topk(5, process_cpu_seconds_total)", "legendFormat": "{{job}} {{instance}}" } ]
+        },
+        {
+          "id": 7, "type": "graph", "title": "Stacked CPU", "span": 6,
+          "lines": true, "fill": 6, "stack": true, "steppedLine": true,
+          "yaxes": [ { "format": "percent" }, { "format": "short" } ],
+          "targets": [ { "refId": "A", "expr": "avg by (mode) (rate(node_cpu_seconds_total[5m])) * 100", "legendFormat": "{{mode}}" } ]
+        },
+        {
+          "id": 8, "type": "grafana-worldmap-panel", "title": "Visitors by country (plugin)", "span": 6,
+          "targets": [ { "refId": "A", "expr": "sum by (country) (visitors_total)" } ]
+        }
+      ]
+    }
+  ]
+}

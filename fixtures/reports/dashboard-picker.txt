@@ -1,0 +1,52 @@
+Dashboard picker verification — 2026-10-02
+
+The dashboard title is now a searchable picker. The default catalog contains
+the repository's 98 dashboards, including three embedded examples that remain
+available if the repository fixtures are absent. --dashboard-dir DIRECTORY
+replaces the scanned collection; nested JSON and Grafana API wrappers are
+supported. The positional dashboard file is included in the list too.
+
+Search matches title, tags and relative filename, case-insensitively. Stable
+path IDs distinguish duplicate titles and nested files with the same name.
+Each newly selected dashboard loads and parses on the background executor.
+An open revision rejects stale loads. Successful switching explicitly cancels
+the previous dashboard's requests and replaces its view, controls and scroll
+state. The configured Prometheus client/endpoint or fake mode is retained.
+Failure keeps the previous dashboard and restores the picker, with an error.
+
+Native checks (macOS):
+- Default collection opened over the existing localhost:19090 port-forward.
+- Searched Prometheus 2.0 Overview and selected with Enter; live Prometheus
+  uptime/series/chunks loaded on the same connection.
+- Searched a different dashboard by filename and pressed Escape; the current
+  dashboard and committed picker selection were restored.
+- Switched back to Node Exporter Full; live gauges and range graphs reloaded.
+- Custom directory and positional JSON opened in fake mode. Invalidated a
+  file after catalog discovery, then selected it: visible parse error, old
+  panel retained, picker restored. Selected kitchen-sink by pointer afterward:
+  successful recovery, fake data and variable controls rendered.
+- Native accessibility only exposed window chrome; screenshots and native
+  pointer/keyboard events were used for interaction verification.
+
+Automated checks:
+- cargo test --workspace --release: 116 passing tests, including recursive
+  discovery, malformed-file warnings, duplicate identities/origins, file edits,
+  load errors, live range rejection, and existing request lifecycle coverage.
+- cargo build --release: passed.
+- cargo clippy --workspace --release: passed with the pre-existing model
+  type_complexity warning and dependency block future-compatibility warning.
+
+Limitations: this is a local file catalog, not a Grafana server browser. The
+catalog is scanned at startup; restart to discover added files or changed
+titles/tags. Switching resets time/variable selections to dashboard defaults.
+Real mode retains the existing Prometheus query/datasource limitations; picking
+a dashboard does not imply its metrics are installed in the cluster.
+
+Launch with the existing forwarded endpoint:
+./target/release/grafaui --fixture node-exporter \
+  --prometheus-url http://127.0.0.1:19090 --scrape-interval 30
+
+For a custom collection, add --dashboard-dir /path/to/dashboards.
+Screenshots: dashboard-picker.png, dashboard-picker-live.png.
+No cluster resources were changed, no new port-forward was started, and the
+pre-existing app/port-forward were left running. Only test apps were stopped.

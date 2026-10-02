@@ -1,0 +1,182 @@
+{
+  "uid": "grafaui-kitchen-sink",
+  "title": "Kitchen sink: every panel type",
+  "description": "Covers each panel type grafaui draws, the partial cases and the placeholders.",
+  "tags": ["grafaui", "fixture", "kubernetes"],
+  "schemaVersion": 39,
+  "time": { "from": "now-6h", "to": "now" },
+  "refresh": "30s",
+  "templating": {
+    "list": [
+      { "name": "datasource", "type": "datasource", "query": "prometheus", "current": { "text": "Prometheus", "value": "prometheus" } },
+      { "name": "job", "label": "Job", "type": "query", "current": { "text": "node-exporter", "value": "node-exporter" } },
+      { "name": "instance", "label": "Instance", "type": "query", "current": { "text": "10.0.1.11:9100", "value": "10.0.1.11:9100" },
+        "options": [
+          { "text": "10.0.1.11:9100", "value": "10.0.1.11:9100" },
+          { "text": "10.0.1.12:9100", "value": "10.0.1.12:9100" },
+          { "text": "10.0.1.13:9100", "value": "10.0.1.13:9100" }
+        ] },
+      { "name": "interval", "label": "Interval", "type": "custom", "current": { "text": "5m", "value": "5m" },
+        "options": [ { "text": "1m" }, { "text": "5m" }, { "text": "15m" } ] },
+      { "name": "cluster", "type": "constant", "query": "prod-eu-1", "hide": 2 }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1, "type": "stat", "title": "Uptime",
+      "description": "Time since the node last booted.",
+      "gridPos": { "x": 0, "y": 0, "w": 4, "h": 5 },
+      "fieldConfig": { "defaults": { "unit": "s", "color": { "mode": "fixed", "fixedColor": "blue" } }, "overrides": [] },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "none" },
+      "targets": [ { "refId": "A", "expr": "node_time_seconds{instance=\"$instance\"} - node_boot_time_seconds{instance=\"$instance\"}" } ]
+    },
+    {
+      "id": 2, "type": "stat", "title": "CPU busy",
+      "gridPos": { "x": 4, "y": 0, "w": 4, "h": 5 },
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100,
+        "thresholds": { "mode": "absolute", "steps": [
+          { "color": "green", "value": null }, { "color": "orange", "value": 60 }, { "color": "red", "value": 85 } ] } } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
+      "targets": [ { "refId": "A", "expr": "100 - avg(rate(node_cpu_seconds_total{mode=\"idle\",instance=\"$instance\"}[$interval])) * 100" } ]
+    },
+    {
+      "id": 3, "type": "gauge", "title": "Memory used",
+      "gridPos": { "x": 8, "y": 0, "w": 4, "h": 5 },
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100,
+        "thresholds": { "mode": "absolute", "steps": [
+          { "color": "green", "value": null }, { "color": "yellow", "value": 70 }, { "color": "red", "value": 90 } ] } } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "showThresholdMarkers": true },
+      "targets": [ { "refId": "A", "expr": "1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes" } ]
+    },
+    {
+      "id": 4, "type": "bargauge", "title": "Disk usage by mount",
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 5 },
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100,
+        "thresholds": { "mode": "absolute", "steps": [
+          { "color": "green", "value": null }, { "color": "orange", "value": 50 }, { "color": "red", "value": 75 } ] } } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "horizontal", "displayMode": "basic" },
+      "targets": [ { "refId": "A", "expr": "100 - node_filesystem_avail_bytes / node_filesystem_size_bytes * 100", "legendFormat": "{{mountpoint}}" } ]
+    },
+    {
+      "id": 5, "type": "piechart", "title": "Responses by status",
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 5 },
+      "fieldConfig": { "defaults": { "unit": "reqps" } },
+      "options": { "pieType": "donut", "reduceOptions": { "calcs": ["mean"] }, "legend": { "showLegend": true } },
+      "targets": [ { "refId": "A", "expr": "sum by (code) (rate(http_requests_total[$interval]))", "legendFormat": "{{code}}" } ]
+    },
+    { "id": 100, "type": "row", "title": "Traffic", "collapsed": false, "gridPos": { "x": 0, "y": 5, "w": 24, "h": 1 }, "panels": [] },
+    {
+      "id": 6, "type": "timeseries", "title": "HTTP requests by method",
+      "description": "Per-second request rate, by method.",
+      "gridPos": { "x": 0, "y": 6, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "reqps",
+        "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 10, "showPoints": "never" } } },
+      "options": { "legend": { "showLegend": true, "displayMode": "list" } },
+      "targets": [ { "refId": "A", "expr": "sum by (method) (rate(http_requests_total{job=\"$job\"}[$interval]))", "legendFormat": "{{method}}" } ]
+    },
+    {
+      "id": 7, "type": "timeseries", "title": "Memory by container (stacked)",
+      "gridPos": { "x": 12, "y": 6, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "bytes",
+        "custom": { "drawStyle": "line", "fillOpacity": 45, "stacking": { "mode": "normal" } } } },
+      "targets": [ { "refId": "A", "expr": "sum by (container) (container_memory_working_set_bytes)", "legendFormat": "{{container}}" } ]
+    },
+    {
+      "id": 8, "type": "timeseries", "title": "5xx responses",
+      "gridPos": { "x": 0, "y": 14, "w": 8, "h": 7 },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "fixed", "fixedColor": "red" },
+        "custom": { "drawStyle": "bars", "fillOpacity": 80 } } },
+      "options": { "legend": { "showLegend": false } },
+      "targets": [ { "refId": "A", "expr": "sum(increase(http_requests_total{code=~\"5..\"}[1m]))" } ]
+    },
+    {
+      "id": 9, "type": "barchart", "title": "Requests by service",
+      "gridPos": { "x": 8, "y": 14, "w": 8, "h": 7 },
+      "fieldConfig": { "defaults": { "unit": "reqps" } },
+      "targets": [ { "refId": "A", "expr": "sum by (service) (rate(http_requests_total[$interval]))", "legendFormat": "{{service}}", "format": "table", "instant": true } ]
+    },
+    {
+      "id": 10, "type": "histogram", "title": "Request latency distribution",
+      "gridPos": { "x": 16, "y": 14, "w": 8, "h": 7 },
+      "fieldConfig": { "defaults": { "unit": "ms", "color": { "mode": "fixed", "fixedColor": "purple" } } },
+      "targets": [ { "refId": "A", "expr": "histogram_quantile(0.9, sum by (le) (rate(http_request_duration_seconds_bucket[$interval])))" } ]
+    },
+    { "id": 101, "type": "row", "title": "Details", "collapsed": false, "gridPos": { "x": 0, "y": 21, "w": 24, "h": 1 }, "panels": [] },
+    {
+      "id": 11, "type": "table", "title": "Pods",
+      "gridPos": { "x": 0, "y": 22, "w": 10, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "percent",
+        "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "red", "value": 60 } ] },
+        "color": { "mode": "thresholds" } } },
+      "targets": [ { "refId": "A", "expr": "sum by (namespace, pod) (rate(container_cpu_usage_seconds_total[$interval])) * 100", "legendFormat": "{{namespace}} {{pod}}", "format": "table" } ]
+    },
+    {
+      "id": 12, "type": "text", "title": "About this dashboard",
+      "gridPos": { "x": 10, "y": 22, "w": 7, "h": 8 },
+      "options": { "mode": "markdown", "content": "## Kitchen sink\n\nEvery panel here is drawn with **gpui-kit** widgets on *fake* data:\n\n- time series → `AreaChart`\n- stat → text + sparkline\n- gauge → two `PieChart` rings\n- bar gauge → `Progress`\n- table → `Table`\n\nPanels with no widget show a placeholder. See the [Grafana docs](https://grafana.com/docs/)." }
+    },
+    {
+      "id": 13, "type": "candlestick", "title": "Spot price",
+      "gridPos": { "x": 17, "y": 22, "w": 7, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "currencyUSD", "min": 80, "max": 140 } },
+      "targets": [ { "refId": "A", "expr": "spot_price_usd" } ]
+    },
+    {
+      "id": 14, "type": "stat", "title": "Load per node",
+      "gridPos": { "x": 0, "y": 30, "w": 24, "h": 4 },
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 2,
+        "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "orange", "value": 50 }, { "color": "red", "value": 80 } ] } } },
+      "options": { "reduceOptions": { "calcs": ["mean"] }, "colorMode": "value", "graphMode": "area" },
+      "targets": [ { "refId": "A", "expr": "node_load1", "legendFormat": "{{node}}" } ]
+    },
+    { "id": 102, "type": "row", "title": "Partly supported and placeholders", "collapsed": false, "gridPos": { "x": 0, "y": 34, "w": 24, "h": 1 }, "panels": [] },
+    {
+      "id": 15, "type": "timeseries", "title": "CPU by mode (overrides, transformation)",
+      "gridPos": { "x": 0, "y": 35, "w": 12, "h": 8 },
+      "fieldConfig": {
+        "defaults": { "unit": "percentunit", "custom": { "fillOpacity": 0, "stacking": { "mode": "percent" } } },
+        "overrides": [ { "matcher": { "id": "byName", "options": "idle" }, "properties": [ { "id": "custom.hideFrom", "value": { "viz": true } } ] } ]
+      },
+      "transformations": [ { "id": "renameByRegex", "options": { "regex": "(.*)", "renamePattern": "mode: $1" } } ],
+      "options": { "legend": { "showLegend": true, "displayMode": "table", "calcs": ["mean", "max"] } },
+      "targets": [ { "refId": "A", "expr": "avg by (mode) (rate(node_cpu_seconds_total[$interval]))", "legendFormat": "{{mode}}" } ]
+    },
+    {
+      "id": 16, "type": "heatmap", "title": "Latency heatmap",
+      "gridPos": { "x": 12, "y": 35, "w": 12, "h": 8 },
+      "targets": [ { "refId": "A", "expr": "sum by (le) (increase(http_request_duration_seconds_bucket[$interval]))", "format": "heatmap" } ]
+    },
+    {
+      "id": 17, "type": "state-timeline", "title": "Node readiness",
+      "gridPos": { "x": 0, "y": 43, "w": 8, "h": 6 },
+      "targets": [ { "refId": "A", "expr": "kube_node_status_condition{condition=\"Ready\",status=\"true\"}" } ]
+    },
+    {
+      "id": 18, "type": "logs", "title": "Error logs",
+      "gridPos": { "x": 8, "y": 43, "w": 8, "h": 6 },
+      "targets": [ { "refId": "A", "expr": "{namespace=\"payments\"} |= \"error\"" } ]
+    },
+    {
+      "id": 19, "type": "nodeGraph", "title": "Service map",
+      "gridPos": { "x": 16, "y": 43, "w": 8, "h": 6 },
+      "targets": [ { "refId": "A", "queryType": "serviceMap" } ]
+    },
+    {
+      "id": 103, "type": "row", "title": "Folded row", "collapsed": true, "gridPos": { "x": 0, "y": 49, "w": 24, "h": 1 },
+      "panels": [
+        {
+          "id": 20, "type": "gauge", "title": "Folded gauge",
+          "gridPos": { "x": 0, "y": 50, "w": 6, "h": 6 },
+          "fieldConfig": { "defaults": { "unit": "celsius", "min": 0, "max": 110,
+            "thresholds": { "mode": "absolute", "steps": [ { "color": "blue", "value": null }, { "color": "green", "value": 30 }, { "color": "red", "value": 80 } ] } } },
+          "targets": [ { "refId": "A", "expr": "node_hwmon_temp_celsius" } ]
+        },
+        {
+          "id": 21, "type": "status-history", "title": "Folded status history",
+          "gridPos": { "x": 6, "y": 50, "w": 18, "h": 6 },
+          "targets": [ { "refId": "A", "expr": "up" } ]
+        }
+      ]
+    }
+  ]
+}

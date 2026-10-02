@@ -1,0 +1,19 @@
+[package]
+name = "grafaui-desktop"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+gpui-kit.workspace = true
+grafaui-model.workspace = true
+grafaui-prometheus.workspace = true
+async-channel = "2.5"
+color-eyre.workspace = true
+serde_json.workspace = true
+hdrhistogram = { version = "7", default-features = false, optional = true }
+
+[features]
+# GPUI's frame histograms in the `GRAFAUI_PERF=1` report.
+profiler = ["gpui-kit/profiler", "dep:hdrhistogram"]

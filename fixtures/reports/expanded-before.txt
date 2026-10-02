@@ -1,0 +1,141 @@
+kitchen-sink.json  17 full   0 partial   4 placeholder  Kitchen sink: every panel type
+legacy.json        7 full   0 partial   1 placeholder  Legacy rows (schema 14)
+node-exporter-full.json 124 full   0 partial   0 placeholder  Node Exporter Full
+10441.json        24 full   0 partial   0 placeholder  Keycloak Metrics Dashboard
+10619.json        13 full   0 partial   0 placeholder  Docker Container & Host Metrics
+10991.json        39 full   1 partial   0 placeholder  RabbitMQ-Overview
+11001.json        13 full   0 partial   0 placeholder  cert-manager
+11022.json        17 full   0 partial   0 placeholder  Envoy Global
+11074.json        24 full   0 partial   0 placeholder  Node Exporter Dashboard EN 20201010-StarsL.cn
+11159.json         9 full   0 partial   0 placeholder  NodeJS Application Dashboard
+11176.json        95 full   4 partial   0 placeholder  VictoriaMetrics - cluster
+11265.json        15 full   0 partial   0 placeholder  Amazon EC2
+11266.json         7 full   0 partial   0 placeholder  Amazon CloudWatch Logs
+11454.json        19 full   0 partial   1 placeholder  K8s / Storage / Volumes / Cluster
+11835.json        12 full   0 partial   0 placeholder  Redis Dashboard for Prometheus Redis Exporter (helm stable/redis-ha)
+12123.json        24 full   0 partial   0 placeholder  Kubernetes / Kubelet
+12163.json        35 full   3 partial   0 placeholder  Altinity ClickHouse Operator Dashboard
+12239.json         8 full   0 partial   0 placeholder  NVIDIA DCGM Exporter Dashboard
+12900.json        39 full   0 partial   0 placeholder  SpringBoot APM Dashboard
+13041.json        15 full   0 partial   0 placeholder  Website monitoring
+13332.json        42 full   0 partial   0 placeholder  kube-state-metrics-v2
+13334.json        11 full   0 partial   0 placeholder  Clickhouse State
+13500.json        22 full   0 partial   0 placeholder  Clickhouse internal exporter
+13606.json        27 full   0 partial   0 placeholder  ClickHouse Performance Monitor
+13639.json         1 full   0 partial   1 placeholder  Logs / App
+13659.json         3 full   0 partial   0 placeholder  Blackbox Exporter (HTTP prober)
+14055.json        15 full   0 partial   3 placeholder  Loki stack monitoring (Promtail, Loki)
+14114.json         6 full   0 partial   0 placeholder  PostgreSQL Exporter Quickstart and Dashboard
+14191.json        55 full   0 partial   0 placeholder  Elasticsearch Exporter Quickstart and Dashboard
+14192.json       101 full   0 partial   0 placeholder  ClickHouse
+14282.json         6 full   0 partial   0 placeholder  Cadvisor exporter
+14361.json        10 full   0 partial   0 placeholder  AWS ALB Cloudwatch Metrics
+14432.json        95 full   0 partial   0 placeholder  ClickHouse_InterServer_Metrics
+14448.json         6 full   0 partial   0 placeholder  Airflow monitoring
+14584.json        41 full   0 partial   0 placeholder  ArgoCD
+14694.json        22 full   0 partial   0 placeholder  Windows Exporter Dashboard
+14900.json        20 full   0 partial   0 placeholder  Nginx
+14981.json        23 full   0 partial   0 placeholder  CoreDNS
+15083.json        11 full   0 partial   0 placeholder  Usage Insights - 1 - Overview
+15661.json        35 full   0 partial   0 placeholder  K8S Dashboard
+15757.json        26 full   0 partial   0 placeholder  Kubernetes / Views / Global
+15758.json        25 full   0 partial   0 placeholder  Kubernetes / Views / Namespaces
+15759.json        35 full   0 partial   0 placeholder  Kubernetes / Views / Nodes
+15760.json        25 full   0 partial   0 placeholder  Kubernetes / Views / Pods
+15761.json        12 full   0 partial   0 placeholder  Kubernetes / System / API Server
+16277.json        38 full   0 partial   0 placeholder  Ethereum Metrics Exporter (Single)
+16685.json        27 full   0 partial   0 placeholder  Clickhouse Memory Analysis
+17175.json         8 full   2 partial   1 placeholder  Spring Boot Observability
+17284.json         5 full   2 partial   1 placeholder  Kubernetes Logs in ClickHouse
+17346.json        14 full   0 partial   0 placeholder  Traefik Official Standalone Dashboard
+17846.json        37 full   0 partial   0 placeholder  Home Staking Dashboard
+19270.json        11 full   2 partial   0 placeholder  Clickhouse Load Testing Results k6.io
+19303.json         2 full   0 partial   1 placeholder  Uptime panel
+19534.json         8 full   0 partial   0 placeholder  Cardinality management - 1 - overview
+19993.json        44 full   0 partial   0 placeholder  ArgoCD / Operational / Overview
+20223.json         0 full   0 partial   4 placeholder  ETH Docker Logs
+20398.json        26 full   0 partial   0 placeholder  Karpenter
+20502.json        11 full   0 partial   0 placeholder  sFlow/Netflow Analytics
+22037.json        62 full   3 partial   0 placeholder  NGINX请求日志分析看板 20241024 StarsL.cn
+23285.json       198 full   1 partial   0 placeholder  ClickHouse and Keeper Comprehensive Dashboard
+23589.json         5 full   0 partial   0 placeholder  ClickHouse system table info
+2515.json          8 full   0 partial   0 placeholder  ClickHouse Queries
+2583.json         16 full   0 partial   0 placeholder  MongoDB
+315.json          21 full   0 partial   0 placeholder  Kubernetes cluster monitoring (via Prometheus)
+3662.json         30 full   0 partial   0 placeholder  Prometheus 2.0 Overview
+4701.json         33 full   0 partial   0 placeholder  JVM (Micrometer)
+593.json           6 full   0 partial   0 placeholder  AWS Lambda
+6417.json         29 full   0 partial   0 placeholder  Kubernetes Cluster (Prometheus)
+6671.json          8 full   0 partial   0 placeholder  Go Processes
+7362.json         36 full   0 partial   0 placeholder  MySQL Overview
+7587.json         10 full   0 partial   0 placeholder  Prometheus Blackbox Exporter
+763.json          13 full   0 partial   0 placeholder  Redis Dashboard for Prometheus Redis Exporter 1.x
+7636.json         25 full   0 partial   0 placeholder  Istio Service Dashboard
+7645.json         12 full   1 partial   0 placeholder  Istio Control Plane Dashboard
+8171.json          8 full   0 partial   0 placeholder  Kubernetes Nodes
+9578.json        156 full   0 partial   0 placeholder  Alertmanager
+9614.json         12 full   0 partial   0 placeholder  NGINX Ingress controller
+9628.json         32 full   0 partial   0 placeholder  PostgreSQL Database
+969.json          12 full   0 partial   0 placeholder  AWS ElastiCache Redis
+grafana-barchart-thresholds-mappings.json  11 full   1 partial   0 placeholder  BarChart - Thresholds & Mappings
+grafana-config-from-query.json   0 full   7 partial   0 placeholder  Transforms - Config from query
+grafana-geomap-color-field.json   0 full   5 partial   0 placeholder  Geomap - color field Copy
+grafana-geomap-multi-layers.json   0 full   2 partial   0 placeholder  Panel Tests - Geomap Multi Layers
+grafana-join-by-field.json   7 full   0 partial   0 placeholder  Transforms - Join by field
+grafana-panel-geomap.json   2 full   2 partial   0 placeholder  Panel Tests - Geomap
+grafana-rows-to-fields.json   4 full   5 partial   0 placeholder  Transforms - Rows to fields
+grafana-table-kitchen-sink.json   2 full   8 partial   0 placeholder  Panel Tests - Table - Kitchen Sink
+grafana-table-sparkline-cell.json   0 full   7 partial   0 placeholder  Panel Tests - Table - Sparklines
+grafana-timeline-demo.json   0 full   0 partial   4 placeholder  Timeline Demo
+grafana-timeline-modes.json   0 full   0 partial   3 placeholder  Timeline Modes
+grafana-timeline-thresholds-mappings.json   0 full   0 partial  11 placeholder  StateTimeline - Thresholds & Mappings
+play-banking-executive.json  12 full   0 partial   0 placeholder  Banking Executive Overview
+play-bars-and-pies.json   3 full   4 partial   1 placeholder  Bar charts and pie charts
+play-business-metrics.json   7 full   1 partial   0 placeholder  Business Metrics
+play-earthquakes.json  12 full   0 partial   0 placeholder  USGS Significant Earthquakes
+play-google-sheets.json  16 full   1 partial   2 placeholder  Visualizing Google Sheets Data
+play-states-and-status.json   3 full   0 partial   5 placeholder  State timeline and Status history
+play-team-weather.json  10 full   3 partial   0 placeholder  🌍 Team Weather
+
+all: 2283 full, 65 partial, 43 placeholder
+
+  21  placeholder: state-timeline  [kitchen-sink.json 19303.json grafana-timeline-demo.json grafana-timeline-modes.json grafana-timeline-thresholds-mappings.json play-google-sheets.json play-states-and-status.json]
+  10  placeholder: logs  [kitchen-sink.json 13639.json 14055.json 17175.json 17284.json 20223.json]
+   8  override property custom.hideFrom.viz  [11176.json grafana-table-kitchen-sink.json]
+   8  transformation configFromData  [grafana-barchart-thresholds-mappings.json grafana-config-from-query.json]
+   7  transformation timeSeriesTable  [grafana-table-sparkline-cell.json]
+   7  value mappings by regex or special value  [12163.json grafana-table-kitchen-sink.json play-bars-and-pies.json play-team-weather.json]
+   6  continuous-BlYlRd color scheme  [grafana-geomap-color-field.json grafana-panel-geomap.json]
+   5  placeholder: status-history  [kitchen-sink.json grafana-timeline-demo.json grafana-timeline-modes.json play-states-and-status.json]
+   5  transformation rowsToFields  [grafana-rows-to-fields.json]
+   4  horizontal bars  [17284.json grafana-config-from-query.json play-bars-and-pies.json]
+   3  override color scheme  [grafana-table-kitchen-sink.json]
+   3  override matcher byFrameRefID  [10991.json 11176.json 7645.json]
+   3  placeholder: innius-video-panel  [play-bars-and-pies.json play-google-sheets.json play-states-and-status.json]
+   2  geomap basemap xyz (using offline geography)  [22037.json]
+   2  placeholder: alertlist  [11454.json 14055.json]
+   2  table cell display modes  [grafana-table-kitchen-sink.json]
+   2  transformation convertFieldType  [12163.json play-business-metrics.json]
+   2  transformation filterByValue  [play-bars-and-pies.json]
+   2  transformation prepareTimeSeries  [19270.json]
+   2  transformation seriesToRows  [17175.json]
+   1  geomap basemap esri-xyz (using offline geography)  [grafana-panel-geomap.json]
+   1  geomap layer geojson  [grafana-geomap-multi-layers.json]
+   1  geomap symbol img/icons/marker/plane.svg  [grafana-geomap-multi-layers.json]
+   1  geomap symbol img/icons/marker/square.svg  [grafana-geomap-multi-layers.json]
+   1  override matcher byType  [12163.json]
+   1  override property actions  [grafana-table-kitchen-sink.json]
+   1  override property custom.axisColorMode  [22037.json]
+   1  override property custom.axisSoftMin  [11176.json]
+   1  override property custom.footer.reducers  [grafana-table-kitchen-sink.json]
+   1  override property custom.lineInterpolation  [12163.json]
+   1  override property custom.tooltip.field  [grafana-table-kitchen-sink.json]
+   1  override property custom.tooltip.placement  [grafana-table-kitchen-sink.json]
+   1  override property custom.wrapText  [grafana-table-kitchen-sink.json]
+   1  placeholder: grafana-worldmap-panel  [legacy.json]
+   1  placeholder: nodeGraph  [kitchen-sink.json]
+   1  transformation calculateField  [grafana-table-kitchen-sink.json]
+   1  transformation concatenate  [23285.json]
+   1  transformation formatTime  [play-google-sheets.json]
+   1  transformation groupToNestedTable  [grafana-table-kitchen-sink.json]
+   1  transformation partitionByValues  [17175.json]

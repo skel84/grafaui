@@ -1,0 +1,166 @@
+$ds_prometheus = Prometheus
+$job = node-exporter
+$nodename = AS6704T-819C
+$node = 192.168.0.217:9100
+0: 3 series, 1 timestamps, 3 finite samples — Pressure
+1: 1 series, 1 timestamps, 1 finite samples — CPU Busy
+2: 1 series, 1 timestamps, 1 finite samples — Sys Load
+3: 1 series, 1 timestamps, 1 finite samples — RAM Used
+4: 1 series, 1 timestamps, 1 finite samples — SWAP Used
+5: 0 series, 0 timestamps, 0 finite samples — Root FS Used
+6: 1 series, 1 timestamps, 1 finite samples — CPU Cores
+7: 1 series, 1 timestamps, 1 finite samples — RAM Total
+8: 1 series, 1 timestamps, 1 finite samples — SWAP Total
+9: 0 series, 0 timestamps, 0 finite samples — RootFS Total
+10: 1 series, 1 timestamps, 1 finite samples — Uptime
+11: 6 series, 361 timestamps, 198 finite samples — CPU Basic
+12: 5 series, 361 timestamps, 165 finite samples — Memory Basic
+13: 24 series, 361 timestamps, 792 finite samples — Network Traffic Basic
+14: 19 series, 361 timestamps, 627 finite samples — Disk Space Used Basic
+15: 8 series, 361 timestamps, 264 finite samples — CPU
+16: 9 series, 361 timestamps, 297 finite samples — Memory
+17: 24 series, 361 timestamps, 792 finite samples — Network Traffic
+18: 22 series, 361 timestamps, 726 finite samples — Network Saturation
+19: 10 series, 361 timestamps, 330 finite samples — Disk IOps
+20: 10 series, 361 timestamps, 330 finite samples — Disk Throughput
+21: 19 series, 361 timestamps, 627 finite samples — Filesystem Space Available
+22: 19 series, 361 timestamps, 627 finite samples — Filesystem Used
+23: 5 series, 361 timestamps, 165 finite samples — Disk I/O Utilization
+24: 5 series, 361 timestamps, 165 finite samples — Pressure Stall Information
+25: 2 series, 361 timestamps, 66 finite samples — Memory Committed
+26: 4 series, 361 timestamps, 132 finite samples — Memory Writeback and Dirty
+27: 2 series, 361 timestamps, 66 finite samples — Memory Slab
+28: 4 series, 361 timestamps, 132 finite samples — Memory Shared and Mapped
+29: 2 series, 361 timestamps, 66 finite samples — Memory LRU Active / Inactive (%)
+30: 4 series, 361 timestamps, 132 finite samples — Memory LRU Active / Inactive Detail
+31: 3 series, 361 timestamps, 99 finite samples — Memory Kernel / CPU / IO
+32: 3 series, 361 timestamps, 99 finite samples — Memory Vmalloc
+33: 2 series, 361 timestamps, 66 finite samples — Memory Anonymous
+34: 2 series, 361 timestamps, 66 finite samples — Memory Unevictable and MLocked
+35: 2 series, 361 timestamps, 66 finite samples — Memory DirectMap
+36: 4 series, 361 timestamps, 132 finite samples — Memory HugePages
+37: 2 series, 361 timestamps, 66 finite samples — Memory Pages In / Out
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_vmstat_pgpgin" (1:6)
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_vmstat_pgpgout" (1:6)
+38: 2 series, 361 timestamps, 66 finite samples — Memory Pages Swap In / Out
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_vmstat_pswpin" (1:6)
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_vmstat_pswpout" (1:6)
+39: 3 series, 361 timestamps, 99 finite samples — Memory Page Faults
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_vmstat_pgfault" (1:6)
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_vmstat_pgmajfault" (1:6)
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_vmstat_pgfault" (1:6)
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_vmstat_pgmajfault" (1:92)
+40: 1 series, 361 timestamps, 33 finite samples — OOM Killer
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_vmstat_oom_kill" (1:6)
+41: 3 series, 361 timestamps, 99 finite samples — Time Synchronized Drift
+42: 1 series, 361 timestamps, 33 finite samples — Time PLL Adjust
+43: 2 series, 361 timestamps, 66 finite samples — Time Synchronized Status
+44: 2 series, 361 timestamps, 66 finite samples — PPS Frequency / Stability
+45: 2 series, 361 timestamps, 66 finite samples — PPS Time Accuracy
+46: 4 series, 361 timestamps, 132 finite samples — PPS Sync Events
+47: 2 series, 361 timestamps, 66 finite samples — Processes Status
+48: 0 series, 361 timestamps, 0 finite samples — Processes Detailed States
+49: 1 series, 361 timestamps, 33 finite samples — Processes Forks
+50: 4 series, 361 timestamps, 132 finite samples — CPU Saturation per Core
+51: 0 series, 361 timestamps, 0 finite samples — PIDs Number and Limit
+52: 0 series, 361 timestamps, 0 finite samples — Threads Number and Limit
+53: 2 series, 361 timestamps, 66 finite samples — Context Switches / Interrupts
+54: 4 series, 361 timestamps, 132 finite samples — System Load
+55: 6 series, 361 timestamps, 198 finite samples — CPU Frequency Scaling
+56: 4 series, 361 timestamps, 132 finite samples — CPU Schedule Timeslices
+57: 0 series, 361 timestamps, 0 finite samples — IRQ Detail
+58: 2 series, 361 timestamps, 66 finite samples — Entropy
+59: 12 series, 361 timestamps, 396 finite samples — Hardware Temperature Monitor
+60: 9 series, 361 timestamps, 297 finite samples — Cooling Device Utilization
+61: 0 series, 361 timestamps, 0 finite samples — Power Supply
+62: 0 series, 361 timestamps, 0 finite samples — Hardware Fan Speed
+63: 0 series, 361 timestamps, 0 finite samples — Systemd Units State
+64: 0 series, 361 timestamps, 0 finite samples — Systemd Sockets Current
+65: 0 series, 361 timestamps, 0 finite samples — Systemd Sockets Accepted
+66: 0 series, 361 timestamps, 0 finite samples — Systemd Sockets Refused
+67: 26 series, 361 timestamps, 858 finite samples — Disk Read/Write IOps
+68: 26 series, 361 timestamps, 858 finite samples — Disk Read/Write Data
+69: 26 series, 361 timestamps, 426 finite samples — Disk Average Wait Time
+70: 13 series, 361 timestamps, 429 finite samples — Average Queue Size
+71: 26 series, 361 timestamps, 858 finite samples — Disk R/W Merged
+72: 39 series, 361 timestamps, 1287 finite samples — Time Spent Doing I/Os
+73: 39 series, 361 timestamps, 1287 finite samples — Disk Ops Discards / Flush
+74: 13 series, 361 timestamps, 429 finite samples — Disk Sectors Discarded Successfully
+75: 13 series, 361 timestamps, 429 finite samples — Instantaneous Queue Size
+76: 2 series, 361 timestamps, 66 finite samples — File Descriptor
+77: 19 series, 361 timestamps, 627 finite samples — File Nodes Free
+78: 37 series, 361 timestamps, 1221 finite samples — Filesystem in ReadOnly / Error
+79: 19 series, 361 timestamps, 627 finite samples — File Nodes Size
+80: 24 series, 361 timestamps, 792 finite samples — Network Traffic by Packets
+81: 24 series, 361 timestamps, 792 finite samples — Network Traffic Errors
+82: 24 series, 361 timestamps, 792 finite samples — Network Traffic Drop
+83: 24 series, 361 timestamps, 792 finite samples — Network Traffic Compressed
+84: 12 series, 361 timestamps, 396 finite samples — Network Traffic Multicast
+85: 12 series, 361 timestamps, 396 finite samples — Network Traffic NoHandler
+86: 12 series, 361 timestamps, 396 finite samples — Network Traffic Frame
+87: 24 series, 361 timestamps, 792 finite samples — Network Traffic Fifo
+88: 12 series, 361 timestamps, 396 finite samples — Network Traffic Collision
+89: 12 series, 361 timestamps, 396 finite samples — Network Traffic Carrier Errors
+90: 4 series, 361 timestamps, 132 finite samples — ARP Entries
+91: 2 series, 361 timestamps, 66 finite samples — NF Conntrack
+92: 12 series, 601 timestamps, 660 finite samples — Network Operational Status
+93: 11 series, 361 timestamps, 363 finite samples — Speed
+94: 12 series, 361 timestamps, 396 finite samples — MTU
+95: 4 series, 361 timestamps, 132 finite samples — Sockstat TCP
+96: 2 series, 361 timestamps, 66 finite samples — Sockstat UDP
+97: 1 series, 361 timestamps, 33 finite samples — Sockstat Used
+98: 2 series, 361 timestamps, 66 finite samples — Sockstat FRAG / RAW
+99: 3 series, 842 timestamps, 121 finite samples — Sockstat Memory Size
+100: 2 series, 361 timestamps, 66 finite samples — Sockstat Average Socket Memory
+101: 2 series, 361 timestamps, 66 finite samples — TCP/UDP Kernel Buffer Memory Pages
+102: 8 series, 361 timestamps, 264 finite samples — Softnet Packets
+103: 4 series, 361 timestamps, 132 finite samples — Softnet Out of Quota
+104: 8 series, 361 timestamps, 264 finite samples — Softnet RPS
+105: 2 series, 361 timestamps, 66 finite samples — Netstat IP In / Out Octets
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_netstat_IpExt_InOctets" (1:6)
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_netstat_IpExt_OutOctets" (1:6)
+106: 2 series, 361 timestamps, 66 finite samples — TCP In / Out
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_netstat_Tcp_InSegs" (1:6)
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_netstat_Tcp_OutSegs" (1:6)
+107: 2 series, 361 timestamps, 66 finite samples — UDP In / Out
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_netstat_Udp_InDatagrams" (1:6)
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_netstat_Udp_OutDatagrams" (1:6)
+108: 2 series, 361 timestamps, 66 finite samples — ICMP In / Out
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_netstat_Icmp_InMsgs" (1:6)
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_netstat_Icmp_OutMsgs" (1:6)
+109: 9 series, 842 timestamps, 429 finite samples — TCP Errors
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_netstat_TcpExt_ListenOverflows" (1:6)
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_netstat_TcpExt_ListenDrops" (1:6)
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_netstat_TcpExt_TCPSynRetrans" (1:6)
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_netstat_Tcp_RetransSegs" (1:6)
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_netstat_Tcp_InErrs" (1:6)
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_netstat_Tcp_OutRsts" (1:6)
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_netstat_TcpExt_TCPRcvQDrop" (1:6)
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_netstat_TcpExt_TCPOFOQueue" (1:6)
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_netstat_TcpExt_TCPTimeouts" (1:6)
+110: 5 series, 842 timestamps, 187 finite samples — UDP Errors
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_netstat_Udp_InErrors" (1:6)
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_netstat_Udp_NoPorts" (1:6)
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_netstat_UdpLite_InErrors" (1:6)
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_netstat_Udp_RcvbufErrors" (1:6)
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_netstat_Udp_SndbufErrors" (1:6)
+111: 1 series, 361 timestamps, 33 finite samples — ICMP Errors
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_netstat_Icmp_InErrors" (1:6)
+112: 3 series, 361 timestamps, 99 finite samples — TCP SynCookie
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_netstat_TcpExt_SyncookiesFailed" (1:6)
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_netstat_TcpExt_SyncookiesRecv" (1:6)
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_netstat_TcpExt_SyncookiesSent" (1:6)
+113: 1 series, 361 timestamps, 33 finite samples — TCP Connections
+114: 2 series, 361 timestamps, 66 finite samples — UDP Queue
+115: 2 series, 361 timestamps, 66 finite samples — TCP Direct Transition
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_netstat_Tcp_ActiveOpens" (1:6)
+  warning: PromQL info: metric might not be a counter, name does not end in _total/_sum/_count/_bucket: "node_netstat_Tcp_PassiveOpens" (1:6)
+116: 0 series, 361 timestamps, 0 finite samples — TCP Stat Persistent
+117: 0 series, 361 timestamps, 0 finite samples — TCP Stat Transient
+118: 0 series, 361 timestamps, 0 finite samples — TCP Socket Queue
+119: 46 series, 361 timestamps, 1518 finite samples — Node Exporter Scrape Time
+120: 1 series, 361 timestamps, 33 finite samples — Exporter Process CPU Usage
+121: 2 series, 361 timestamps, 66 finite samples — Exporter Processes Memory
+122: 2 series, 361 timestamps, 66 finite samples — Exporter File Descriptor Usage
+123: 47 series, 361 timestamps, 1551 finite samples — Node Exporter Scrape
+124 panels: 109 with data, 15 empty, 0 errors

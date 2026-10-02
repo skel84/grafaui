@@ -1,0 +1,36 @@
+[workspace]
+members = ["crates/*"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+clap = { version = "4", features = ["derive"] }
+color-eyre = "0.6"
+gpui-kit = "=0.7.0"
+grafaui-model = { path = "crates/grafaui-model" }
+grafaui-desktop = { path = "crates/grafaui-desktop" }
+grafaui-prometheus = { path = "crates/grafaui-prometheus" }
+
+[package]
+name = "grafaui"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Grafana dashboards rendered natively with GPUI Kit"
+
+[dependencies]
+grafaui-desktop.workspace = true
+clap.workspace = true
+color-eyre.workspace = true
+
+# Unoptimised GPUI draws a frame roughly 14x slower. Optimise dependencies in
+# dev builds; workspace crates stay unoptimised so they rebuild quickly.
+[profile.dev.package."*"]
+opt-level = 3
+debug = "line-tables-only"

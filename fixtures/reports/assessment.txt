@@ -1,0 +1,73 @@
+Fixture expansion assessment — 2026-10-02
+
+20 additional, unmodified public dashboard exports (98 dashboards total).
+12 Grafana v12.2.0 developer examples pinned to commit
+92f1fba9b4b6700328e99e97328d6639df8ddc3d, seven public Grafana Play
+exports, and one Grafana.com community dashboard (19303 revision 1).
+Source URLs, revisions, licenses where supplied, and SHA-256 checksums are
+recorded in fixtures/sources/expanded.json. Local verification:
+  python3 scripts/fetch-fixtures.py --check
+Downloading missing snapshots (existing files are never overwritten):
+  python3 scripts/fetch-fixtures.py
+Mutable upstream demo exports must match their recorded SHA-256 to download.
+
+Support counts, full / partial / placeholder:
+  Original 78 dashboards: 2192 / 19 / 16 before; 2200 / 11 / 16 after.
+  Expanded 98 dashboards: 2283 / 65 / 43 before; 2287 / 61 / 43 after.
+The corpus gained 164 panels, including 39 tables, 20 state timelines,
+9 geomaps and 4 status histories. Feature counts are per panel and overlap.
+
+Agreed fixes, expanded corpus before -> after:
+  byFrameRefID override matchers: 3 -> 0
+  byType override matchers: 1 -> 0
+  custom.hideFrom.viz overrides: 8 -> 0
+  horizontal categorical bar charts: 4 -> 0
+Query identity survives table renaming, reordering and grouping. Shared
+columns have no single query identity. Later false visibility overrides can
+unhide fields. The Kit 0.7.0 BarChart uses its native Left alignment.
+
+The new samples also prompted legacy geomap style parsing and fake map
+coordinate/value field aliases. Non-Chinese dashboards get worldwide
+sample locations. Query/type/value field overrides resolve before map
+color, size and tooltip values are derived.
+
+Newly reported limitations include explicit named-field/inner joins,
+barchart colorByField, shared geomap views, marker text/rotation and legacy
+non-circle marker shapes. These notes increase partial counts on the new
+fixtures: fixing old notes alone would give a misleading improvement.
+
+Next work, excluding logs:
+  Preserve mock query field names/types and frame shapes: embedded CSV,
+    raw-frame and reused-dashboard queries currently become generic fake
+    series. This affects field-name overrides and categorical grouping even
+    when the support report says full. Values may remain synthetic.
+  State timeline (21 panels) and status history (5): largest missing visuals.
+  Query-driven field configuration: configFromData (8), rowsToFields (5).
+  Table sparklines/timeSeriesTable (7).
+  Regex/special value mappings (7), including textual table values.
+  Geomap continuous-BlYlRd palette (6); then additional marker/layer styles.
+
+The report describes recognized settings, not pixel-for-pixel rendering or
+faithful datasource schemas. Joining table data currently combines reduced
+series by complete label sets, not arbitrary frame rows or timestamps.
+Grouped categorical bars remain one reduced bar per series.
+
+Validation:
+  cargo test --workspace --release: 95 tests passed.
+  cargo build --release: passed.
+  cargo clippy --workspace --release: passed, with the two existing warnings
+    (SQL return type complexity and dashboard needless borrow).
+  Snapshot checksum verification: all 20 passed.
+  Native visual checks are recorded below.
+  17284, top of dashboard: native horizontal node/pod bars and value axes.
+  7645, expanded and scrolled 250 px: Memory Allocations has MiB/s left,
+    c/s right, and separate units in legend values.
+  10991, expanded and scrolled 1400 px: Message Size Distribution matches
+    query-selected colors from green through yellow/orange to dark red.
+  11176, expanded and scrolled 6250 px: Non-default flags retains text
+    columns while the numeric Value and Time columns are hidden.
+  play-earthquakes, expanded and scrolled 380 px: worldwide markers,
+    differing radii, offline geography and legend are visible. The adjacent
+    full-rated details table shows only Series/Value: mock field-schema gap.
+  play-banking-executive, top: currency/percentage stats, stacked bars,
+    independent charts and legends render without overlap or clipping.
