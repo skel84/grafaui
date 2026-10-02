@@ -58,6 +58,8 @@ pub(crate) struct DashboardView {
     completed: usize,
     errors: usize,
     variable_error: Option<String>,
+    variable_warning: Option<String>,
+    variables_ready: bool,
     /// By panel key.
     panels: Vec<Entity<PanelView>>,
     /// By section.
@@ -198,6 +200,8 @@ impl DashboardView {
             completed: 0,
             errors: 0,
             variable_error: None,
+            variable_warning: None,
+            variables_ready: !live,
             panels: Vec::new(),
             collapsed,
             variables,
@@ -286,6 +290,8 @@ impl DashboardView {
             self.completed = 0;
             self.errors = 0;
             self.variable_error = None;
+            self.variable_warning = None;
+            self.variables_ready = false;
             self.status = "Loading variables…".into();
             for panel in &self.panels {
                 let title = context
@@ -337,6 +343,7 @@ impl DashboardView {
     fn receive(&mut self, event: Event, window: &mut Window, cx: &mut Context<Self>) {
         match event {
             Event::Variables(variables, warnings) => {
+                self.variables_ready = true;
                 for index in 0..self.values.len() {
                     self.values[index] = variables.selection(index);
                 }
@@ -344,11 +351,12 @@ impl DashboardView {
                     let mut options: Choices = variables
                         .options(*index)
                         .iter()
+                        .filter(|value| !value.is_empty())
                         .cloned()
                         .map(Into::into)
                         .collect();
                     let selected: SharedString = self.values[*index].clone().into();
-                    if !options.contains(&selected) {
+                    if !selected.is_empty() && !options.contains(&selected) {
                         options.insert(0, selected.clone());
                     }
                     state.update(cx, |state, cx| {
@@ -358,7 +366,7 @@ impl DashboardView {
                 }
                 self.status = "Loading panels…".into();
                 if !warnings.is_empty() {
-                    self.variable_error = Some(warnings.join("; "));
+                    self.variable_warning = Some(warnings.join("; "));
                 }
             }
             Event::Panel { key, result, span } => {
@@ -380,6 +388,7 @@ impl DashboardView {
                 );
             }
             Event::Failed(error) => {
+                self.variables_ready = true;
                 self.status = "Variable query failed".into();
                 self.variable_error = Some(error.clone());
                 let context = self.context();
@@ -546,7 +555,14 @@ impl DashboardView {
                                     .id(("variable", index))
                                     .small()
                                     .w(dp(150.))
-                                    .menu_width(dp(220.)),
+                                    .menu_width(dp(220.))
+                                    .placeholder(if self.variables_ready {
+                                        "Empty"
+                                    } else {
+                                        "Loading…"
+                                    })
+                                    .accessibility_label(variable.label.clone())
+                                    .disabled(!self.variables_ready),
                             )
                     }),
             )
@@ -789,6 +805,16 @@ impl Render for DashboardView {
                         .text_sm()
                         .text_color(cx.theme().danger)
                         .child(error),
+                )
+            })
+            .when_some(self.variable_warning.clone(), |this, warning| {
+                this.child(
+                    div()
+                        .px_3()
+                        .py_1()
+                        .text_sm()
+                        .text_color(cx.theme().warning)
+                        .child(warning),
                 )
             })
             .when(!self.variables.is_empty(), |this| {

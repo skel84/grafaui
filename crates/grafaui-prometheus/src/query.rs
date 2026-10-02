@@ -52,9 +52,13 @@ impl Variables {
             .collect()
     }
 
-    pub(crate) fn resolve(&mut self, index: usize, mut options: Vec<String>) -> Result<()> {
+    pub(crate) fn resolve(
+        &mut self,
+        index: usize,
+        mut options: Vec<String>,
+    ) -> Result<Option<String>> {
         let entry = &mut self.entries[index];
-        options.retain(|v| !v.is_empty() && v != "$__all" && v != "All");
+        options.retain(|v| v != "$__all" && v != "All");
         let pattern = entry.definition.regex.trim();
         if !pattern.is_empty() {
             let pattern = pattern.strip_prefix('/').unwrap_or(pattern);
@@ -101,14 +105,19 @@ impl Variables {
         }
         let mut seen = std::collections::HashSet::new();
         options.retain(|v| seen.insert(v.clone()));
+        let warning = options.is_empty().then(|| {
+            format!(
+                "variable {} returned no values; {}",
+                entry.definition.name,
+                if entry.definition.include_all {
+                    "All has no returned values"
+                } else {
+                    "using an empty selection"
+                }
+            )
+        });
         if entry.definition.include_all {
             options.insert(0, "All".into());
-        }
-        if options.is_empty() {
-            return Err(format!(
-                "variable {} returned no choices",
-                entry.definition.name
-            ));
         }
         let all = entry.selected.iter().any(|v| v == "All" || v == "$__all");
         entry.selected = if all && entry.definition.include_all {
@@ -122,10 +131,12 @@ impl Variables {
                 .collect()
         };
         if entry.selected.is_empty() {
-            entry.selected.push(options[0].clone());
+            entry
+                .selected
+                .push(options.first().cloned().unwrap_or_default());
         }
         entry.options = options;
-        Ok(())
+        Ok(warning)
     }
 
     /// Grafana variable syntax, with PromQL string/regex escaping. Unknown
@@ -189,16 +200,20 @@ impl Variables {
                     Some("regex") => {
                         let escaped: Vec<_> = values
                             .iter()
-                            .map(|v| string_escape(&regex::escape(v)))
+                            .map(|v| string_escape(&escape_prometheus_regex(v)))
                             .collect();
                         format!("({})", escaped.join("|"))
                     }
-                    None if entry.definition.multi || all => {
+                    None if entry.definition.multi || entry.definition.include_all => {
                         let escaped: Vec<_> = values
                             .iter()
-                            .map(|v| string_escape(&regex::escape(v)))
+                            .map(|v| string_escape(&escape_prometheus_regex(v)))
                             .collect();
-                        format!("({})", escaped.join("|"))
+                        if escaped.len() == 1 {
+                            escaped[0].clone()
+                        } else {
+                            format!("({})", escaped.join("|"))
+                        }
                     }
                     None => values.first().map(|v| string_escape(v)).unwrap_or_default(),
                     Some(f) => {
@@ -210,6 +225,20 @@ impl Variables {
             .into_owned();
         error.map_or(Ok(output), Err)
     }
+}
+
+/// RE2 metacharacters, matching Grafana's Prometheus interpolation. Rust's
+/// regex::escape also escapes hyphens and other harmless punctuation, which
+/// breaks exact selectors on a single multi-value selection such as a job.
+fn escape_prometheus_regex(value: &str) -> String {
+    let mut escaped = String::new();
+    for character in value.chars() {
+        if "*+?()|\\.[]{}^$".contains(character) {
+            escaped.push('\\');
+        }
+        escaped.push(character);
+    }
+    escaped
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -652,7 +681,7 @@ mod tests {
             variables
                 .interpolate("$node", &[("node".into(), "host.a".into())])
                 .unwrap(),
-            r"(host\\.a)"
+            r"host\\.a"
         );
         assert!(variables.interpolate("$missing", &[]).is_err());
         assert!(variables.interpolate("${node:json}", &[]).is_err());
@@ -700,6 +729,57 @@ mod tests {
             .unwrap();
         assert_eq!(variables.options(0), ["2", "10"]);
         assert_eq!(variables.selection(0), "2");
-        assert!(variables.resolve(0, vec![]).is_err());
+        assert!(
+            variables
+                .resolve(0, vec![])
+                .unwrap()
+                .unwrap()
+                .contains("returned no values")
+        );
+        assert!(variables.options(0).is_empty());
+        assert_eq!(variables.selection(0), "");
+        assert_eq!(
+            variables
+                .interpolate(r#"up{instance="$node"}"#, &[])
+                .unwrap(),
+            r#"up{instance=""}"#
+        );
+    }
+
+    #[test]
+    fn single_multi_selection_keeps_exact_jobs_and_re2_regex_literals() {
+        let dashboard = Dashboard::parse(r#"{"templating":{"list":[{"name":"job","type":"query","multi":true},{"name":"instance","type":"query","includeAll":true},{"name":"blank","type":"constant","query":""}]}}"#).unwrap();
+        let mut variables = Variables::new(&dashboard.variables, &[]);
+        variables.resolve(0, vec!["node-exporter".into()]).unwrap();
+        variables.resolve(1, vec!["host.a:9100".into()]).unwrap();
+        assert!(variables.resolve(2, vec![String::new()]).unwrap().is_none());
+        assert_eq!(
+            variables
+                .interpolate(
+                    r#"up{job="$job",instance=~"$instance",cluster="$blank"}"#,
+                    &[]
+                )
+                .unwrap(),
+            r#"up{job="node-exporter",instance=~"host\\.a:9100",cluster=""}"#
+        );
+    }
+
+    #[test]
+    fn empty_query_choices_preserve_all_and_custom_all_values_without_saved_choices() {
+        let dashboard = Dashboard::parse(r#"{"templating":{"list":[
+            {"name":"host","type":"query","includeAll":true,"regex":"/^worker-/","current":{"value":"$__all"},"options":[{"value":"old-host"}]},
+            {"name":"job","type":"query","includeAll":true,"allValue":".*","current":{"value":"$__all"}}]}}"#).unwrap();
+        let mut variables = Variables::new(&dashboard.variables, &[]);
+        assert!(
+            variables
+                .resolve(0, vec!["other-host".into()])
+                .unwrap()
+                .is_some()
+        );
+        assert!(variables.resolve(1, vec![]).unwrap().is_some());
+        assert_eq!(variables.options(0), ["All"]);
+        assert_eq!(variables.selection(0), "All");
+        assert_eq!(variables.interpolate("$host", &[]).unwrap(), "()");
+        assert_eq!(variables.interpolate("$job", &[]).unwrap(), ".*");
     }
 }

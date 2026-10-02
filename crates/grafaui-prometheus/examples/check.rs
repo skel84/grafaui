@@ -6,9 +6,9 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 fn main() -> Result<(), String> {
     let mut args = std::env::args().skip(1);
-    let url = args
-        .next()
-        .ok_or("usage: check URL DASHBOARD.json [from] [scrape-interval-seconds]")?;
+    let url = args.next().ok_or(
+        "usage: check URL DASHBOARD.json [from] [scrape-interval-seconds] [--variables-only]",
+    )?;
     let path = args.next().ok_or("missing dashboard path")?;
     let from = args.next().unwrap_or_else(|| "now-1h".into());
     let scrape_interval = args
@@ -19,6 +19,7 @@ fn main() -> Result<(), String> {
         })
         .transpose()?
         .unwrap_or(15.);
+    let variables_only = args.any(|arg| arg == "--variables-only");
     let dashboard =
         Dashboard::parse_unexpanded(&std::fs::read_to_string(path).map_err(|e| e.to_string())?)
             .map_err(|e| e.to_string())?;
@@ -40,6 +41,9 @@ fn main() -> Result<(), String> {
     }
     for warning in warnings {
         println!("warning: {warning}");
+    }
+    if variables_only {
+        return Ok(());
     }
     let mut errors = 0;
     let mut nonempty = 0;

@@ -236,17 +236,15 @@ impl Client {
                     ];
                     let path;
                     match &query {
-                        VariableQuery::LabelValues {
-                            selector: Some(selector),
-                            ..
-                        } => {
-                            path = "series".to_owned();
-                            params.push(("match[]".into(), selector.clone()));
+                        VariableQuery::LabelValues { selector, label } => {
+                            // Request distinct values directly. Fetching every
+                            // series for broad container selectors can exceed
+                            // the response limit just to populate a dropdown.
+                            path = format!("label/{label}/values");
+                            if let Some(selector) = selector {
+                                params.push(("match[]".into(), selector.clone()));
+                            }
                         }
-                        VariableQuery::LabelValues {
-                            selector: None,
-                            label,
-                        } => path = format!("label/{label}/values"),
                         VariableQuery::LabelNames => path = "labels".into(),
                         VariableQuery::Metrics(_) => path = "label/__name__/values".into(),
                         VariableQuery::QueryResult(expression) => {
@@ -264,17 +262,6 @@ impl Client {
                     let (data, notes) = response::envelope(&value)?;
                     warnings.extend(notes);
                     match query {
-                        VariableQuery::LabelValues {
-                            selector: Some(_),
-                            label,
-                        } => data
-                            .as_array()
-                            .ok_or("invalid series response")?
-                            .iter()
-                            .filter_map(|m| {
-                                m.get(&label).and_then(Value::as_str).map(str::to_owned)
-                            })
-                            .collect(),
                         VariableQuery::QueryResult(_) => {
                             if data.get("resultType").and_then(Value::as_str) != Some("vector") {
                                 return Err(
@@ -318,7 +305,9 @@ impl Client {
                     ));
                 }
             };
-            variables.resolve(index, options)?;
+            if let Some(warning) = variables.resolve(index, options)? {
+                warnings.push(warning);
+            }
         }
         Ok((variables, warnings))
     }

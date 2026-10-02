@@ -57,6 +57,9 @@ variables, common Grafana macros, target intervals and legend templates. Every
 Prometheus datasource name/UID uses the configured endpoint. Authentication,
 multiple endpoints, native histograms and repeat expansion are not supported.
 See [verification and limitations](fixtures/reports/prometheus-connection.txt).
+Successful empty variable queries display a warning and allow panel requests to
+continue. See the [live variable investigation](fixtures/reports/prometheus-variable-investigation.txt)
+for dashboard compatibility checks and remaining fixture-specific limitations.
 
 ## Build and test
 

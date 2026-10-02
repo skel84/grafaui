@@ -60,8 +60,8 @@ fn dependent_variables_and_encoded_instant_range_requests_use_one_prefixed_endpo
     let (sent, received) = mpsc::channel();
     let server = thread::spawn(move || {
         for body in [
-            r#"{"status":"success","data":[{"job":"node-exporter"}]}"#,
-            r#"{"status":"success","data":[{"instance":"10.0.0.1:9100"}]}"#,
+            r#"{"status":"success","data":["node-exporter"]}"#,
+            r#"{"status":"success","data":["10.0.0.1:9100"]}"#,
             r#"{"status":"success","data":{"resultType":"vector","result":[{"metric":{"instance":"10.0.0.1:9100"},"value":[1000,"2"]}]}}"#,
             r#"{"status":"success","data":{"resultType":"matrix","result":[{"metric":{"instance":"10.0.0.1:9100"},"values":[[990,"3"]]}]}}"#,
         ] {
@@ -96,7 +96,7 @@ fn dependent_variables_and_encoded_instant_range_requests_use_one_prefixed_endpo
     );
     server.join().unwrap();
     let requests: Vec<_> = received.iter().collect();
-    assert!(requests[0].starts_with("GET /prometheus/api/v1/series?"));
+    assert!(requests[0].starts_with("GET /prometheus/api/v1/label/job/values?"));
     assert!(requests[0].contains("match%5B%5D=node_uname_info"));
     assert!(requests[1].contains("job%3D%22node-exporter%22"));
     assert!(requests[2].starts_with("POST /prometheus/api/v1/query "));
@@ -105,6 +105,76 @@ fn dependent_variables_and_encoded_instant_range_requests_use_one_prefixed_endpo
     assert!(requests[3].starts_with("POST /prometheus/api/v1/query_range "));
     assert!(requests[3].contains("step=30"));
     assert!(requests[3].contains("%5B60s%5D"));
+}
+
+#[test]
+fn absent_cluster_label_warns_but_dependent_variables_and_panels_still_query() {
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let client = Client::new(&format!("http://{}", listener.local_addr().unwrap()), 30.).unwrap();
+    let (sent, received) = mpsc::channel();
+    let server = thread::spawn(move || {
+        for body in [
+            r#"{"status":"success","data":[]}"#,
+            r#"{"status":"success","data":["node-exporter"]}"#,
+            r#"{"status":"success","data":{"resultType":"vector","result":[{"metric":{},"value":[1000,"3"]}]}}"#,
+        ] {
+            let (mut stream, _) = listener.accept().unwrap();
+            sent.send(read_request(&mut stream)).unwrap();
+            respond(&mut stream, "200 OK", body);
+        }
+    });
+    // Mirrors Kubernetes / Views / Global: cluster is optional on exported
+    // metrics, and a multi-value job is used in an exact equality matcher.
+    let dashboard = Dashboard::parse(r#"{"templating":{"list":[
+        {"name":"cluster","type":"query","query":"label_values(kube_node_info,cluster)","current":{"text":"old-cluster","value":"old-cluster"}},
+        {"name":"job","type":"query","multi":true,"query":"label_values(node_cpu_seconds_total{cluster=\"$cluster\"},job)"}]},
+        "panels":[{"type":"stat","targets":[{"expr":"count(node_cpu_seconds_total{cluster=\"$cluster\",job=\"$job\"})","refId":"A","instant":true,"range":false}]}]}"#).unwrap();
+    let cancellation = Cancellation::default();
+    let (variables, warnings) = client
+        .resolve_variables(&dashboard.variables, &[], context().window, &cancellation)
+        .unwrap();
+    assert!(variables.options(0).is_empty());
+    assert_eq!(variables.selection(0), "");
+    assert_eq!(variables.selection(1), "node-exporter");
+    assert_eq!(warnings.len(), 1);
+    assert!(warnings[0].contains("variable cluster returned no values"));
+    let (frame, _) = client
+        .query_panel(dashboard.panel(0), &context(), &variables, &cancellation)
+        .unwrap();
+    assert_eq!(frame.series[0].values, [3.]);
+    server.join().unwrap();
+    let requests: Vec<_> = received.iter().collect();
+    assert!(requests[0].starts_with("GET /api/v1/label/cluster/values?"));
+    assert!(requests[1].starts_with("GET /api/v1/label/job/values?"));
+    assert!(requests[1].contains("cluster%3D%22%22"));
+    assert!(requests[2].contains("cluster%3D%22%22%2Cjob%3D%22node-exporter%22"));
+    assert!(!requests.iter().any(|r| r.contains("old-cluster")));
+}
+
+#[test]
+fn failed_variable_request_remains_an_error_instead_of_an_empty_selection() {
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let client = Client::new(&format!("http://{}", listener.local_addr().unwrap()), 15.).unwrap();
+    let server = thread::spawn(move || {
+        let (mut stream, _) = listener.accept().unwrap();
+        read_request(&mut stream);
+        respond(
+            &mut stream,
+            "503 Service Unavailable",
+            r#"{"status":"error","errorType":"unavailable","error":"temporarily unavailable"}"#,
+        );
+    });
+    let dashboard = Dashboard::parse(r#"{"templating":{"list":[{"name":"cluster","type":"query","query":"label_values(kube_node_info,cluster)"}]}}"#).unwrap();
+    let error = client
+        .resolve_variables(
+            &dashboard.variables,
+            &[],
+            context().window,
+            &Cancellation::default(),
+        )
+        .unwrap_err();
+    assert!(error.contains("variable cluster: HTTP 503"));
+    server.join().unwrap();
 }
 
 #[test]

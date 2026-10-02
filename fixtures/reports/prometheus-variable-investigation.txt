@@ -1,0 +1,154 @@
+Prometheus variable investigation — 2026-10-03
+
+Cause and correction
+--------------------
+Kubernetes Views dashboards query label_values(kube_node_info,cluster).
+The live cluster has 6 kube_node_info series, all without a cluster label.
+Prometheus permits cluster="" to match those unlabeled series. Grafaui was
+incorrectly treating a successful empty variable result as a fatal error.
+
+Successful empty variable results now resolve to an empty selection with a
+visible warning. Saved choices are discarded when absent from the live result.
+The warning does not block dependent variables or panel requests. HTTP/API
+failures and unsupported queries remain errors; fake data is never substituted.
+Empty variable controls display Empty; controls are disabled while resolving.
+
+Grafana-compatible default multi/All interpolation no longer groups a single
+value, and it escapes RE2 metacharacters without escaping hyphens. A single
+job selection now produces job="node-exporter", instead of a parenthesized
+regex string in an exact equality matcher. Multiple selections remain regex
+alternations; dashboards must use regex matchers to support multiple/All values.
+
+label_values requests now use /api/v1/label/<label>/values with match[], start
+and end. Broad container selectors previously fetched all series and hit the
+64 MiB response limit. The compact endpoint returns distinct values directly.
+
+Live checks (now-1h, scrape interval 30s)
+---------------------------------------
+15757: 26 panels: 24 with data, 2 empty, 0 errors
+15758: 25 panels: 23 with data, 2 empty, 0 errors
+15759: 35 panels: 35 with data, 0 empty, 0 errors
+15760: 25 panels: 9 with data, 16 empty, 0 errors
+15761: 12 panels: 12 with data, 0 empty, 0 errors
+node-exporter-full: 124 panels: 109 with data, 15 empty, 0 errors
+
+Global: the throttled-seconds selector (image!="") returns no matching series.
+OOM metrics exist but their increase is zero, so the dashboard's > 0 filter
+returns no samples. These panels correctly show No data.
+
+Pods: the default All selection has custom value .*. Several stat targets use
+pod="$pod" (exact equality), which becomes pod=".*" and matches no real pod.
+Select an individual pod for those targets, or adjust the dashboard to use =~.
+Other empty results depend on each fixture's metric/label selectors and events.
+Grafaui preserves these expressions instead of rewriting their meaning.
+
+Native check
+------------
+Verified the final release binary renders the Global dashboard with live data,
+a yellow cluster warning, Empty cluster, and job node-exporter.
+Screenshots: prometheus-kubernetes-global-fixed.png and
+prometheus-kubernetes-nodes-fixed.png. Also switched to Nodes through the
+searchable dashboard picker and verified live charts and resolved variables.
+
+Variable-only audit of all 98 bundled dashboards
+------------------------------------------------
+77 resolved their variables (42 with nonfatal empty-variable warnings).
+21 rejected unsupported or incomplete definitions. This is variable coverage,
+not a claim that all panels/data on those dashboards are supported:
+
+fixtures/kitchen-sink.json — Kitchen sink: every panel type
+"variable job has no query"
+
+fixtures/legacy.json — Legacy rows (schema 14)
+"variable host has no query"
+
+fixtures/real/11074.json — Node Exporter Dashboard EN 20201010-StarsL.cn
+"variable total regex: regex parse error:\n    {} (.*) .*\n    ^\nerror: repetition operator missing expression"
+
+fixtures/real/11176.json — VictoriaMetrics - cluster
+"variable adhoc: unsupported variable type adhoc"
+
+fixtures/real/11265.json — Amazon EC2
+"variable datasource: only the Prometheus datasource is available"
+
+fixtures/real/11266.json — Amazon CloudWatch Logs
+"variable datasource: only the Prometheus datasource is available"
+
+fixtures/real/13606.json — ClickHouse Performance Monitor
+"variable user: unsupported variable query \"select distinct initial_user from system.query_log where event_date >= today()-3 and event_time > toDateTime(today()-3)\"; supported: label_values, label_names, metrics, query_result"
+
+fixtures/real/14361.json — AWS ALB Cloudwatch Metrics
+"variable datasource: only the Prometheus datasource is available"
+
+fixtures/real/14448.json — Airflow monitoring
+"variable Dags: unsupported variable query \"select dag_id from public.dag\"; supported: label_values, label_names, metrics, query_result"
+
+fixtures/real/15083.json — Usage Insights - 1 - Overview
+"variable instance_id: unsupported variable query \"grafanacloud_grafana_instance_info{}\"; supported: label_values, label_names, metrics, query_result"
+
+fixtures/real/16685.json — Clickhouse Memory Analysis
+"variable ch_node: unsupported variable query \"ClickHouseAsyncMetrics_Uptime\"; supported: label_values, label_names, metrics, query_result"
+
+fixtures/real/17284.json — Kubernetes Logs in ClickHouse
+"variable node: unsupported datasource type grafana-clickhouse-datasource; this connection is Prometheus"
+
+fixtures/real/19270.json — Clickhouse Load Testing Results k6.io
+"variable DB: unsupported datasource type grafana-clickhouse-datasource; this connection is Prometheus"
+
+fixtures/real/19534.json — Cardinality management - 1 - overview
+"variable datasource regex: regex parse error:\n    (?!grafanacloud-usage|grafanacloud-ml-metrics).+\n    ^^^\nerror: look-around, including look-ahead and look-behind, is not supported"
+
+fixtures/real/20398.json — Karpenter
+"variable query0: unsupported variable query \"\"; supported: label_values, label_names, metrics, query_result"
+
+fixtures/real/22037.json — NGINX请求日志分析看板 20241024 StarsL.cn
+"variable project: unsupported datasource type grafana-clickhouse-datasource; this connection is Prometheus"
+
+fixtures/real/23589.json — ClickHouse system table info
+"variable server: only the Prometheus datasource is available"
+
+fixtures/real/2515.json — ClickHouse Queries
+"variable user: unsupported variable query \"select distinct initial_user from system.query_log where event_date >= today()-3 and event_time > toDateTime(today()-3)\"; supported: label_values, label_names, metrics, query_result"
+
+fixtures/real/593.json — AWS Lambda
+"variable datasource: only the Prometheus datasource is available"
+
+fixtures/real/969.json — AWS ElastiCache Redis
+"variable datasource: only the Prometheus datasource is available"
+
+fixtures/real/grafana-table-kitchen-sink.json — Panel Tests - Table - Kitchen Sink
+"variable Filters: unsupported datasource type grafana-testdata-datasource; this connection is Prometheus"
+
+Validation
+----------
+cargo test --workspace --release --locked: 121 tests passed.
+cargo build --release --locked: passed.
+cargo fmt --all -- --check: passed.
+cargo clippy --workspace --all-targets --release --locked: passed with the
+pre-existing model type-complexity warning and block 0.1.6 compatibility note.
+
+Environment
+-----------
+Only read-only API queries and local port-forwards were used. No cluster
+resources were changed. The pre-existing user forward on 19090 stopped
+responding during the broader audit; a fresh forward to the same service on
+19092 worked. The pre-existing forward was left untouched. Only the forward
+and native app processes started for this investigation were stopped.
+
+Reproduce with a fresh forward (first terminal):
+kubectl --kubeconfig ~/code/home-ops/kubeconfig -n observability port-forward --address 127.0.0.1 svc/kube-prometheus-stack-prometheus 19092:9090
+
+Native app (second terminal, after cargo build --release):
+./target/release/grafaui fixtures/real/15757.json --prometheus-url http://127.0.0.1:19092 --scrape-interval 30
+
+Variable-only diagnostic:
+cargo run --release --locked -p grafaui-prometheus --example check -- http://127.0.0.1:19092 fixtures/real/15757.json now-1h 30 --variables-only
+
+References
+----------
+https://prometheus.io/docs/prometheus/latest/querying/basics/
+https://prometheus.io/docs/prometheus/latest/querying/api/#querying-label-values
+https://github.com/grafana/grafana/blob/92f1fba9b4b6700328e99e97328d6639df8ddc3d/packages/grafana-prometheus/src/escaping.ts
+
+The initial CI artifacts from commit 7fad63f predate these fixes. Build or
+download artifacts from a commit containing this report to test the correction.
