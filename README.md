@@ -76,8 +76,11 @@ and a release build on native Intel and Apple Silicon runners. It runs on pushes
 to `main`, pull requests, `v*` tags and manual dispatch. Each architecture uploads
 an archive and checksum. Dependencies are locked and Rust build outputs cached.
 
-Crates separate pure dashboard parsing/data models (`grafaui-model`), HTTP query
-execution (`grafaui-prometheus`) and native rendering (`grafaui-desktop`).
+Crates separate pure dashboard parsing/data models (`grafaui-model`), Prometheus
+queries (`grafaui-prometheus`) and native rendering (`grafaui-desktop`). The query
+crate plans every call as data, variables included (`plan::VariablePlan`), so
+another transport can send it as a GET or a POST; its blocking HTTP `Client` sits
+behind the default `client` feature.
 
 ## License
 

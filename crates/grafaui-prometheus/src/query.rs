@@ -5,7 +5,7 @@ use promql_parser::{parser, util::parse_duration};
 use regex::{Captures, Regex};
 use serde_json::Value;
 
-use crate::Result;
+use crate::{Result, api::ApiRequest};
 
 /// A snapshot of variable choices and selections, passed with each request.
 #[derive(Clone, Debug, Default)]
@@ -288,6 +288,10 @@ impl Request {
             ]),
         }
         params
+    }
+    /// The request as transport-neutral data, sent as a GET or a POST.
+    pub fn api(&self) -> ApiRequest {
+        ApiRequest::new(self.path(), self.params())
     }
 }
 

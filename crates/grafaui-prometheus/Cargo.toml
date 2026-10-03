@@ -10,5 +10,18 @@ grafaui-model.workspace = true
 serde_json.workspace = true
 regex = "1.12"
 promql-parser = "0.11.0"
-reqwest = { version = "0.12.28", default-features = false, features = ["blocking", "json", "rustls-tls"] }
+reqwest = { version = "0.12.28", default-features = false, features = ["blocking", "json", "rustls-tls"], optional = true }
 
+[features]
+# The blocking HTTP client. Without it the crate is pure: callers send each
+# `ApiRequest` through their own transport.
+default = ["client"]
+client = ["dep:reqwest"]
+
+[[example]]
+name = "check"
+required-features = ["client"]
+
+[[test]]
+name = "http"
+required-features = ["client"]

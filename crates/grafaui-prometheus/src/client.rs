@@ -12,8 +12,10 @@ use serde_json::Value;
 
 use crate::{
     Result,
+    api::ApiRequest,
     lifecycle::Cancellation,
-    query::{self, VariableQuery, Variables},
+    plan::VariablePlan,
+    query::{self, Variables},
     response,
 };
 
@@ -70,8 +72,7 @@ impl Client {
 
     fn request(
         &self,
-        path: &str,
-        params: &[(String, String)],
+        request: &ApiRequest,
         post: bool,
         cancellation: &Cancellation,
     ) -> Result<Value> {
@@ -90,14 +91,21 @@ impl Client {
         *active += 1;
         drop(active);
         let _permit = Permit(self.slots.clone());
-        let url = self
-            .base
-            .join(&format!("api/v1/{path}"))
-            .map_err(|_| "invalid API path")?;
         let request = if post {
-            self.http.post(url).form(params)
+            let url = self
+                .base
+                .join(&format!("api/v1/{}", request.path))
+                .map_err(|_| "invalid API path")?;
+            self.http
+                .post(url)
+                .header("content-type", "application/x-www-form-urlencoded")
+                .body(request.form())
         } else {
-            self.http.get(url).query(params)
+            let url = self
+                .base
+                .join(&request.get_target()?)
+                .map_err(|_| "invalid API path")?;
+            self.http.get(url)
         };
         let mut response = request.send().map_err(|e| {
             // Don't include the URL (or potential credentials) in error output.
@@ -143,7 +151,7 @@ impl Client {
         let mut warnings = Vec::new();
         for request in requests {
             let value = self
-                .request(request.path(), &request.params(), true, cancellation)
+                .request(&request.api(), true, cancellation)
                 .map_err(|e| format!("{}: {e}", request.ref_id()))?;
             let (frame, notes) = response::convert(&value, &request)
                 .map_err(|e| format!("{}: {e}", request.ref_id()))?;
@@ -174,141 +182,16 @@ impl Client {
         window: TimeWindow,
         cancellation: &Cancellation,
     ) -> Result<(Variables, Vec<String>)> {
-        let mut variables = Variables::new(definitions, selections);
-        let mut warnings = Vec::new();
-        for (index, definition) in definitions.iter().enumerate() {
+        let mut plan = VariablePlan::new(definitions, selections, window, self.scrape_interval);
+        loop {
             cancellation.check()?;
-            query::check_datasource(&definition.datasource)
-                .map_err(|e| format!("variable {}: {e}", definition.name))?;
-            let options = match definition.kind.as_str() {
-                "datasource" => {
-                    if definition.query.as_deref() != Some("prometheus") {
-                        return Err(format!(
-                            "variable {}: only the Prometheus datasource is available",
-                            definition.name
-                        ));
-                    }
-                    vec!["Prometheus".into()]
-                }
-                "constant" | "textbox" => {
-                    let value = definition
-                        .selected
-                        .first()
-                        .cloned()
-                        .or_else(|| definition.query.clone())
-                        .unwrap_or_else(|| definition.current.clone());
-                    vec![value]
-                }
-                "custom" | "interval" => {
-                    if !definition.saved_options.is_empty() {
-                        definition.saved_options.clone()
-                    } else {
-                        definition
-                            .query
-                            .as_deref()
-                            .unwrap_or("")
-                            .split(',')
-                            .map(|v| v.trim().to_owned())
-                            .collect()
-                    }
-                }
-                "query" => {
-                    let text = definition
-                        .query
-                        .as_deref()
-                        .ok_or_else(|| format!("variable {} has no query", definition.name))?;
-                    let text = variables.interpolate(text, &[])?;
-                    let interval = (window.span as f64 / 600.).ceil().max(1.);
-                    let text = query::macros(
-                        &text,
-                        interval,
-                        (interval + self.scrape_interval).max(4. * self.scrape_interval),
-                        window,
-                    )?;
-                    let query = query::variable_query(&text)
-                        .map_err(|e| format!("variable {}: {e}", definition.name))?;
-                    let mut params = vec![
-                        (
-                            "start".into(),
-                            (window.end - window.span as i64).to_string(),
-                        ),
-                        ("end".into(), window.end.to_string()),
-                    ];
-                    let path;
-                    match &query {
-                        VariableQuery::LabelValues { selector, label } => {
-                            // Request distinct values directly. Fetching every
-                            // series for broad container selectors can exceed
-                            // the response limit just to populate a dropdown.
-                            path = format!("label/{label}/values");
-                            if let Some(selector) = selector {
-                                params.push(("match[]".into(), selector.clone()));
-                            }
-                        }
-                        VariableQuery::LabelNames => path = "labels".into(),
-                        VariableQuery::Metrics(_) => path = "label/__name__/values".into(),
-                        VariableQuery::QueryResult(expression) => {
-                            path = "query".into();
-                            params = vec![
-                                ("query".into(), expression.clone()),
-                                ("time".into(), window.end.to_string()),
-                                ("timeout".into(), "15s".into()),
-                            ];
-                        }
-                    }
-                    let value = self
-                        .request(&path, &params, false, cancellation)
-                        .map_err(|e| format!("variable {}: {e}", definition.name))?;
-                    let (data, notes) = response::envelope(&value)?;
-                    warnings.extend(notes);
-                    match query {
-                        VariableQuery::QueryResult(_) => {
-                            if data.get("resultType").and_then(Value::as_str) != Some("vector") {
-                                return Err(
-                                    "query_result variables require a vector response".into()
-                                );
-                            }
-                            data.get("result").and_then(Value::as_array).ok_or("invalid query_result response")?.iter().map(|entry| {
-                                let labels = entry.get("metric").and_then(Value::as_object).ok_or("query_result missing metric")?.iter()
-                                    .map(|(k, v)| Ok((k.clone(), v.as_str().ok_or("invalid metric label")?.to_owned()))).collect::<Result<Vec<_>>>()?;
-                                let sample = entry.get("value").and_then(Value::as_array).ok_or("query_result missing sample (native histograms unsupported)")?;
-                                Ok(format!("{} {} {}", response::metric_name(&labels), sample.get(1).and_then(Value::as_str).ok_or("invalid sample")?, sample.first().ok_or("missing timestamp")?))
-                            }).collect::<Result<Vec<_>>>()?
-                        }
-                        VariableQuery::Metrics(pattern) => {
-                            let regex = regex::Regex::new(&pattern)
-                                .map_err(|e| format!("metrics regex: {e}"))?;
-                            data.as_array()
-                                .ok_or("invalid label values response")?
-                                .iter()
-                                .filter_map(Value::as_str)
-                                .filter(|s| regex.is_match(s))
-                                .map(str::to_owned)
-                                .collect()
-                        }
-                        _ => data
-                            .as_array()
-                            .ok_or("invalid label values response")?
-                            .iter()
-                            .map(|v| {
-                                v.as_str()
-                                    .map(str::to_owned)
-                                    .ok_or("invalid label value".into())
-                            })
-                            .collect::<Result<Vec<_>>>()?,
-                    }
-                }
-                kind => {
-                    return Err(format!(
-                        "variable {}: unsupported variable type {kind}",
-                        definition.name
-                    ));
-                }
+            let Some(request) = plan.next_request()? else {
+                return Ok(plan.finish());
             };
-            if let Some(warning) = variables.resolve(index, options)? {
-                warnings.push(warning);
-            }
+            let value = self
+                .request(&request, false, cancellation)
+                .map_err(|e| plan.failed(&e))?;
+            plan.answer(&value)?;
         }
-        Ok((variables, warnings))
     }
 }
